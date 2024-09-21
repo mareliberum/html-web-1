@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видео с веб-камеры</title>
+    <style>
+        video {
+            width: 640px;
+            height: 480px;
+            border: 2px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Видео с веб-камеры</h1>
+    <video id="webcam" autoplay></video>
+
+    <script>
+        const video = document.getElementById('webcam');
+
+        // Проверка поддержки getUserMedia
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Получаем доступ к камере
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    // Устанавливаем поток в качестве источника для видео элемента
+                    video.srcObject = stream;
+                })
+                .catch(function(err) {
+                    console.log("Ошибка: " + err);
+                });
+        } else {
+            alert("Ваш браузер не поддерживает доступ к веб-камере.");
+        }
+    </script>
+</body>
+</html>
