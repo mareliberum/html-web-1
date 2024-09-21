@@ -118,6 +118,26 @@
             left: 0;
             bottom: -10px;
         }
+        /* Face Detection Styles */
+        .face-detection-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            margin: 0 auto;
+        }
+
+        .face-detection-container video,
+        .face-detection-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 10px;
+        }
+
+        .face-detection-container canvas {
+            pointer-events: none; /* Allows clicks to pass through to the video */
+        }
+
 
         /* Image Gallery */
         .gallery {
@@ -233,13 +253,15 @@
     <!-- Face Detection Section -->
     <section id="facedetection" data-aos="fade-up">
         <div class="content">
-            <h2>Face Detection (Coming Soon)</h2>
-            <p>This section will allow you to use your webcam for face detection using OpenCV.</p>
-            <div class="gallery">
-                <img src="{{ url_for('video_feed') }}" alt="Face Detection Placeholder">
+            <h2>Face Detection</h2>
+            <p>Use your webcam to detect faces in real-time.</p>
+            <div class="face-detection-container">
+                <video id="video" width="640" height="480" autoplay muted></video>
+                <canvas id="overlay" width="640" height="480"></canvas>
             </div>
         </div>
     </section>
+
 
     <!-- Footer -->
     <footer>
@@ -255,15 +277,51 @@
             once: true,
         });
 
-        // Smooth Scrolling for Older Browsers
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
+        
     </script>
+    <!-- face-api.js Library -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script defer>
+    // Wait for the DOM to load
+    document.addEventListener('DOMContentLoaded', async () => {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('overlay');
+        const context = canvas.getContext('2d');
+
+        // Load face-api.js models
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        // You can load additional models if needed, e.g., face landmarks, expressions
+
+        // Start the video stream
+        navigator.mediaDevices.getUserMedia({ video: {} })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing the webcam: ", err);
+                alert("Cannot access webcam. Please allow camera permissions.");
+            });
+
+        // Once the video plays, start detection
+        video.addEventListener('play', () => {
+            const displaySize = { width: video.width, height: video.height };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                
+                // Clear the canvas
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw detections
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+            }, 100); // Adjust the interval as needed
+        });
+    });
+</script>
+
+
 </body>
 </html>
